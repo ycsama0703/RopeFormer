@@ -1,0 +1,2 @@
+# Core (method only). Data/experiment dependencies are intentionally excluded.
+torch>=2.0
