@@ -34,32 +34,30 @@ further public series whose horizons differ. Splits are chronological.
 
 ### 3. Method
 
-**Architecture, and how we arrived at the modification.** We use an
-encoder-only Transformer over the lookback window, since self-attention lets
-any two days interact directly. A Transformer is order-blind unless position is
-encoded, so we use rotary position encoding (RoPE), which represents position
-by rotating each query and key vector through angles proportional to its index,
-across a geometric ladder of frequencies. Two observations followed. Every head
-receives the *same* positional encoding, so the parallel pathways of multi-head
-attention are never induced to specialise by time scale. And models that do
-capture multiple resolutions, such as MTST and Pathformer, buy them by adding
-architecture: branches, patch sizes, pyramid levels. Together these suggested
-taking multi-resolution from parallelism already present.
+**Architecture and motivation.** We use an encoder-only Transformer over the
+lookback window, since self-attention lets any two days interact directly. A
+Transformer is order-blind unless position is encoded, so we use rotary
+position encoding (RoPE), which encodes position by rotating each query and key
+vector through angles proportional to its index across a ladder of frequencies.
+Two observations follow. Every head receives the *same* positional encoding, so
+the parallel pathways of multi-head attention are never induced to specialise
+by time scale. And models that do capture multiple resolutions, such as MTST
+and Pathformer, buy them by adding architecture. This suggests taking
+multi-resolution from parallelism already present.
 
-**The proposed model.** Each head receives its own learnable scalar multiplying
-position before the rotary angle is formed, so each views the series at its own
-time scale. RoPE is a natural carrier because its frequencies are explicit:
-once the band is re-specified for a 60-day window and narrowed per head, "the
-time scale of head *h*" becomes a reportable number of days. Per-head
-positional scales are not new - ALiBi assigns fixed per-head slopes - but
-transferring them to rotary encodings and learning them is. The model outputs a
-conditional log-volatility per step, with direction as an auxiliary head.
+**The proposed model.** Each head therefore receives its own learnable scalar
+multiplying position before the rotary angle is formed, so each views the
+series at its own time scale. RoPE is a natural carrier because its frequencies
+are explicit: once the band is re-specified for a 60-day window and narrowed
+per head, a head's time scale becomes a reportable number of days. Per-head
+positional scales are not new - ALiBi assigns fixed slopes - but transferring
+them to rotary encodings and learning them is. The model outputs a conditional
+log-volatility per step.
 
-**Baselines and evaluation.** HAR-RV, fit on the same daily proxy; an otherwise
-identical Transformer with one shared positional encoding, which ablates the
-mechanism directly; and LSTM, GRU and iTransformer for reference. We score with
-QLIKE and RMSE on log-variance over several seeds, and report the learned
-per-head scales so the mechanism can be inspected, not only benchmarked.
+**Baselines and evaluation.** HAR-RV; an identical Transformer with one shared
+positional encoding, which ablates the mechanism; and LSTM, GRU and
+iTransformer. We score with QLIKE and RMSE on log-variance over several seeds
+and report the learned scales.
 
 ### 4. Expected difficulties and solutions
 
@@ -71,12 +69,6 @@ per-head scales so the mechanism can be inspected, not only benchmarked.
   window.
 - **Data irregularities.** WTI printed negative in April 2020, breaking log
   returns; we screen non-positive prices and hold out a recent period.
-
-### 5. Finance relevance
-
-Volatility forecasts drive margining, hedging and risk limits. The learned
-per-head scales additionally read out the horizon at which a market is
-currently organised, which HAR fixes by convention rather than estimating.
 
 ---
 
@@ -100,6 +92,9 @@ currently organised, which HAR fixes by convention rather than estimating.
   from section 4 for space. It is still a real risk: add a diversity penalty on
   scale spacing and log the trajectories. Put it back if a bullet frees up.
 - Verify the two FRED series IDs on the site before submitting.
+- Finance relevance was dropped: the official handout lists only problem,
+  method, data and difficulties. The TA's outline included it, so if a marker
+  expects it, one sentence can be folded into section 1.
 - If trimming is needed, cut from section 2. Do not cut the derivation
   paragraph in section 3 - it is what makes this read as a deep learning
   project rather than a finance one.

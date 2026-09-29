@@ -16,3 +16,7 @@ results/
 .vscode/
 .idea/
 .DS_Store
+
+# Derived from docs/05-proposal-draft.md - regenerate rather than edit
+proposal.txt
+proposal.docx
