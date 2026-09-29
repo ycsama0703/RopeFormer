@@ -12,19 +12,24 @@ addition).
 
 ### 1. Problem and motivation
 
-Crude oil volatility is driven by participants acting at different horizons -
-intraday speculation, weekly hedging, monthly allocation - so its structure is
-inherently multi-scale. Existing approaches either fix those horizons by hand,
-as HAR does, or do not represent horizon structure at all. We ask whether a
-deep model can instead **learn** the time scales that matter.
+Volatility in crude oil markets is persistent, and that persistence runs at
+several horizons at once: participants speculate intraday, hedge weekly and
+allocate monthly, and their activity superimposes on one series.
+Existing approaches take one of two routes. Econometric models such as
+HAR impose the horizons by hand - daily, weekly, monthly - which are
+conventions rather than estimates, and cannot adapt when a market's relevant
+horizons differ or shift between calm and crisis. Deep sequence models, by
+contrast, do not represent horizon structure at all. Between the two, nobody
+estimates the horizons. We ask whether a deep model can **learn** the time
+scales that matter, and report them.
 
 ### 2. Data
 
-Primary source: daily crude oil spot prices from FRED, series `DCOILWTICO`
-(WTI) and `DCOILBRENTEU` (Brent), public and free at fred.stlouisfed.org, with
-coverage from 1986. Target: realised volatility at a 5-day horizon from a
-60-day lookback, measured as the standard deviation of daily log returns. This
-is a daily proxy, as no intraday data is used. Since the method concerns
+Primary source: daily crude oil spot prices from FRED - `DCOILWTICO` (WTI) and
+`DCOILBRENTEU` (Brent), free at fred.stlouisfed.org, from 1986. Target:
+realised volatility at a 5-day horizon from a 60-day lookback, as the standard
+deviation of daily log returns - a daily proxy, since no intraday data is
+used. Since the method concerns
 learned time scales, we also evaluate on one or two further public series whose
 horizons differ. Splits are chronological.
 
@@ -58,20 +63,17 @@ directly; and LSTM, GRU and iTransformer for reference.
 
 ### 4. Expected difficulties and solutions
 
-- **Low signal-to-noise on direction.** In preliminary work, directional
-  accuracy across 576 configurations had a spread of 0.0249 against a binomial
-  noise floor of 0.0239, so differences were unidentifiable. We target
-  volatility instead, and report multi-seed confidence intervals rather than
-  best-of-grid results.
+- **Low signal-to-noise on direction.** Directional accuracy across 576
+  preliminary configurations spread by 0.0249 against a binomial noise floor of
+  0.0239, so differences were unidentifiable. We target volatility instead and
+  report multi-seed confidence intervals, not best-of-grid results.
 - **Positional encoding inherited from NLP.** At a 60-day window, five of eight
   rotary frequency bands have wavelengths above 200 days and carry almost no
   positional information. We set the rotary base from the window length and
-  verify the spectrum with a diagnostic script.
-- **Head collapse.** Nothing forces the learned scales to stay distinct. We add
-  a diversity penalty on their spacing and log their trajectories.
+  check the spectrum.
 - **Structural breaks and non-positive prices.** WTI printed negative in April
   2020, making log returns undefined, and four decades span several market
-  regimes. We screen for non-positive prices and hold out a recent period.
+  regimes. We screen non-positive prices and hold out a recent period.
 
 ### 5. Finance relevance
 
@@ -94,6 +96,9 @@ currently organised, which HAR fixes by convention rather than estimating.
 - Proprietary Platts-style assessments (`PPXDK00` and the other six series)
   are deliberately left out of the submission. Add them as an extension only
   if access is confirmed.
+- Head collapse (nothing forces the learned scales to stay distinct) was cut
+  from section 4 for space. It is still a real risk: add a diversity penalty
+  on scale spacing and log the trajectories. Put it back if a bullet frees up.
 - Verify the two FRED series IDs on the site before submitting.
 - If trimming is needed, cut from section 2 or the last bullet of section 4.
   Do not cut the two numbers, and do not cut the derivation paragraph in
