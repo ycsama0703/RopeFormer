@@ -49,7 +49,7 @@ taking multi-resolution from parallelism already present.
 
 **The proposed model.** Each head receives its own learnable scalar multiplying
 position before the rotary angle is formed, so each views the series at its own
-time scale and the model learns which scales matter. RoPE is a natural carrier
+time scale. RoPE is a natural carrier
 because its frequencies are explicit: once the band is re-specified for a
 60-day window and narrowed per head, "the time scale of head *h*" becomes a
 reportable number of days. Per-head positional scales are not new - ALiBi
@@ -57,23 +57,23 @@ assigns fixed per-head slopes - but transferring them to rotary encodings and
 learning them is. The model outputs a conditional log-volatility per step, with
 direction as an auxiliary head.
 
-**Baselines.** HAR-RV, fit on the same daily proxy; an otherwise identical
-Transformer with one shared positional encoding, ablating the mechanism
-directly; and LSTM, GRU and iTransformer for reference.
+**Baselines and evaluation.** HAR-RV, fit on the same daily proxy; an
+otherwise identical Transformer with one shared positional encoding, which
+ablates the mechanism directly; and LSTM, GRU and iTransformer for reference.
+We score with QLIKE and RMSE on log-variance over several seeds, and report the
+learned per-head scales so the mechanism can be inspected, not only
+benchmarked.
 
 ### 4. Expected difficulties and solutions
 
-- **Low signal-to-noise on direction.** Directional accuracy across 576
-  preliminary configurations spread by 0.0249 against a binomial noise floor of
-  0.0239, so differences were unidentifiable. We target volatility instead and
-  report multi-seed confidence intervals, not best-of-grid results.
-- **Positional encoding inherited from NLP.** At a 60-day window, five of eight
-  rotary frequency bands have wavelengths above 200 days and carry almost no
-  positional information. We set the rotary base from the window length and
-  check the spectrum.
-- **Structural breaks and non-positive prices.** WTI printed negative in April
-  2020, making log returns undefined, and four decades span several market
-  regimes. We screen non-positive prices and hold out a recent period.
+- **Low signal-to-noise.** Return direction is close to unpredictable, so we
+  target volatility and report multi-seed intervals rather than a single best
+  run.
+- **Mis-specified positional encoding.** RoPE's default frequency range suits
+  NLP context lengths, not a 60-day window; we tune the rotary base to the
+  window.
+- **Data irregularities.** WTI printed negative in April 2020, breaking log
+  returns; we screen non-positive prices and hold out a recent period.
 
 ### 5. Finance relevance
 
@@ -85,10 +85,12 @@ currently organised, which HAR fixes by convention rather than estimating.
 
 ## Notes for the group (not part of the submission)
 
-- Both numbers in section 4 are reproducible: the noise-floor comparison from
-  the original 576-point grid search, the frequency spectrum from
-  `tools/check_rope_spectrum.py`. Most groups write generic difficulties, so
-  keeping these specific is the cheapest way to stand out.
+- Section 4 deliberately carries no measurements. The noise-floor comparison
+  and the frequency-spectrum count come from the earlier individual oil_index
+  work, not from this group project, so they do not belong in this submission.
+  They remain useful internally: see `tools/check_rope_spectrum.py` and
+  [`03-known-issues.md`](03-known-issues.md). Once we have reproduced anything
+  equivalent as a group, it can be cited in the final report.
 - Section 3 promises narrowed per-head frequency bands. That work is not done
   yet; see [`04-redesign-directions.md`](04-redesign-directions.md) direction B.
 - ALiBi is named in one clause only, for space. The final report needs a proper
@@ -100,7 +102,6 @@ currently organised, which HAR fixes by convention rather than estimating.
   from section 4 for space. It is still a real risk: add a diversity penalty
   on scale spacing and log the trajectories. Put it back if a bullet frees up.
 - Verify the two FRED series IDs on the site before submitting.
-- If trimming is needed, cut from section 2 or the last bullet of section 4.
-  Do not cut the two numbers, and do not cut the derivation paragraph in
-  section 3 - it is what makes this read as a deep learning project rather than
-  a finance one.
+- If trimming is needed, cut from section 2. Do not cut the derivation
+  paragraph in section 3 - it is what makes this read as a deep learning
+  project rather than a finance one.
